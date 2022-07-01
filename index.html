@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+        <title>五目並べ</title>
+        
+        <link rel="stylesheet" href="base.css">
+        <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+        <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+    </head>
+
+    <body>
+        <div class="container">
+            <h2 class="title">三目並べ</h2>
+            <div class="grid">
+                <div class="cell">
+                    <span id="pos-1-x" class="batu hidden">X</span>
+                    <span id="pos-1-o" class="maru hidden">O</span>
+                    <span id="pos-1-none" class="hidden">
+                        <button id="pos-1-button" pys-onclick="lambda e: cell_click(0)"></button>
+                    </span>
+                </div>
+                <div class="cell">
+                    <span id="pos-2-x" class="batu hidden">X</span>
+                    <span id="pos-2-o" class="maru hidden">O</span>
+                    <span id="pos-2-none" class="hidden">
+                        <button id="pos-2-button"  pys-onclick="lambda e: cell_click(1)"></button>
+                    </span>
+                </div>
+                <div class="cell">
+                    <span id="pos-3-x" class="batu hidden">X</span>
+                    <span id="pos-3-o" class="maru hidden">O</span>
+                    <span id="pos-3-none" class="hidden">
+                        <button id="pos-3-button"  pys-onclick="lambda e: cell_click(2)"></button>
+                    </span>
+                </div>
+                <div class="cell">
+                    <span id="pos-4-x" class="batu hidden">X</span>
+                    <span id="pos-4-o" class="maru hidden">O</span>
+                    <span id="pos-4-none" class="hidden">
+                        <button id="pos-4-button"  pys-onclick="lambda e: cell_click(3)"></button>
+                    </span>
+                </div>
+                <div class="cell">
+                    <span id="pos-5-x" class="batu hidden">X</span>
+                    <span id="pos-5-o" class="maru hidden">O</span>
+                    <span id="pos-5-none" class="hidden">
+                        <button id="pos-5-button"  pys-onclick="lambda e: cell_click(4)"></button>
+                    </span>
+                </div>
+                <div class="cell">
+                    <span id="pos-6-x" class="batu hidden">X</span>
+                    <span id="pos-6-o" class="maru hidden">O</span>
+                    <span id="pos-6-none" class="hidden">
+                        <button id="pos-6-button"  pys-onclick="lambda e: cell_click(5)"></button>
+                    </span>
+                </div>
+                <div class="cell">
+                    <span id="pos-7-x" class="batu hidden">X</span>
+                    <span id="pos-7-o" class="maru hidden">O</span>
+                    <span id="pos-7-none" class="hidden">
+                        <button id="pos-7-button"  pys-onclick="lambda e: cell_click(6)"></button>
+                    </span>
+                </div>
+                <div class="cell">
+                    <span id="pos-8-x" class="batu hidden">X</span>
+                    <span id="pos-8-o" class="maru hidden">O</span>
+                    <span id="pos-8-none" class="hidden">
+                        <button id="pos-8-button"  pys-onclick="lambda e: cell_click(7)"></button>
+                    </span>
+                </div>
+                <div class="cell">
+                    <span id="pos-9-x" class="batu hidden">X</span>
+                    <span id="pos-9-o" class="maru hidden">O</span>
+                    <span id="pos-9-none" class="hidden">
+                        <button id="pos-9-button"  pys-onclick="lambda e: cell_click(8)"></button>
+                    </span>
+                </div>
+            </div>
+            <h3 id="message"></h3>
+            <button id="reset-button" class="hidden" pys-onclick="lambda _: reset()">もう一度</button>
+        </div>
+
+<py-script>
+import time
+
+def cell_click(position):
+    game.play_turn(position)
+    ai_turn()
+
+    
+def ai_turn():
+    <!-- # AI TURN -->
+    <!-- game.stop() -->
+    score, pos = min_max(game, 1)
+    <!-- game.resume() -->
+    <!-- time.sleep(10.5) -->
+
+    <!-- wait_sec = 3 -->
+    <!-- print("%d秒待ちます" % wait_sec) -->
+    <!-- until = time.perf_counter() + wait_sec -->
+    <!-- while time.perf_counter() < until: -->
+        <!-- pass -->
+
+    game.play_turn(pos)
+
+
+def reset():
+    game.start()
+
+def update_cells(values):
+    for i, value in enumerate(values, start=1):
+        Element(f"pos-{i}-x").add_class("hidden")
+        Element(f"pos-{i}-o").add_class("hidden")
+        Element(f"pos-{i}-none").add_class("hidden")
+        if value == 0:
+            Element(f"pos-{i}-x").remove_class("hidden")
+        elif value == 1:
+            Element(f"pos-{i}-o").remove_class("hidden")
+        else:
+            Element(f"pos-{i}-none").remove_class("hidden")
+
+def display_message(value):
+    Element("message").write(value)
+
+def min_max(game, maxPlayer):
+    opp = 1 if maxPlayer == 0 else 0
+
+    if game.is_draw():
+        return 0, None
+    elif game.is_winner(maxPlayer):
+        return 10, None
+    elif game.is_winner(opp):
+        return -10, None
+    
+    max_t = -9999
+    max_c = None
+    for c in game.candidates():
+        game.move(c, maxPlayer)
+        
+        t, cc = min_max(game, opp)
+        t *= -1
+        if max_t < t:
+            max_t = t
+            max_c = c
+            
+        game.back(c)
+        
+    return max_t, max_c
+
+class TicTacToe:
+    def start(self):
+        self.player = 0
+        self.cells = [None] * 9
+        self.game_running = True
+        display_message('あなたの番')
+        update_cells(self.cells)
+        Element("reset-button").add_class("hidden")
+
+    def stop(self):
+        self.game_running = False
+
+    def resume(self):
+        self.game_running = True
+
+    def play_turn(self, position):
+        if not self.game_running:
+            return
+        if self.cells[position] != None:
+            display_message("Invalid Position")
+            return
+        
+        self.cells[position] = self.player
+        update_cells(self.cells)
+        if not self.is_game_over():
+            self.next_palyer()
+        else:
+            Element("reset-button").remove_class("hidden")
+    
+    def next_palyer(self):
+        player_messages = ["あなたの番", "AIの番（考え中...)"]
+        self.player = (self.player + 1) % 2
+        display_message(player_messages[self.player])
+    
+    def is_game_over(self):
+    
+        if self.is_winner(self.player):
+            win_messages = ["あなたの勝ち", "AIの勝ち"]
+            display_message(win_messages[self.player])
+            self.game_running = False
+            return True
+        if self.is_draw():
+            display_message("引き分け")
+            self.game_running = False
+            return True
+        return False
+
+    def is_winner(self, player):
+        win_patterns = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6), (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]
+        for a1, a2, a3 in win_patterns:
+            if self.cells[a1] == self.cells[a2] == self.cells[a3] == player:
+                return True
+        return False
+
+    def is_draw(self):
+        return all(val != None for val in self.cells)
+
+    def candidates(self):
+        return [i for i,x in enumerate(self.cells) if x == None]
+
+    def move(self, pos, player):
+        self.cells[pos] = player
+    
+    def back(self, pos):
+        self.cells[pos] = None
+
+
+game = TicTacToe()
+game.start()
+
+import sys
+sys.setrecursionlimit(3000)  # 1000(default)
+
+
+</py-script>
+    </body>
+</html>
