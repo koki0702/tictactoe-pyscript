@@ -4,7 +4,7 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-        <title>五目並べ</title>
+        <title>最強の三目並べ</title>
         
         <link rel="stylesheet" href="base.css">
         <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
@@ -13,7 +13,7 @@
 
     <body>
         <div class="container">
-            <h2 class="title">三目並べ</h2>
+            <h2 class="title">最強の三目並べ</h2>
             <div class="grid">
                 <div class="cell">
                     <span id="pos-1-x" class="batu hidden">X</span>
@@ -84,26 +84,18 @@
         </div>
 
 <py-script>
-import time
-
 def cell_click(position):
     game.play_turn(position)
-    ai_turn()
+    
+    if game.game_running:
+        ai_turn()
 
     
 def ai_turn():
     <!-- # AI TURN -->
-    <!-- game.stop() -->
+    game.stop()
     score, pos = min_max(game, 1)
-    <!-- game.resume() -->
-    <!-- time.sleep(10.5) -->
-
-    <!-- wait_sec = 3 -->
-    <!-- print("%d秒待ちます" % wait_sec) -->
-    <!-- until = time.perf_counter() + wait_sec -->
-    <!-- while time.perf_counter() < until: -->
-        <!-- pass -->
-
+    game.resume()
     game.play_turn(pos)
 
 
@@ -125,30 +117,45 @@ def update_cells(values):
 def display_message(value):
     Element("message").write(value)
 
-def min_max(game, maxPlayer):
-    opp = 1 if maxPlayer == 0 else 0
+def min_max(game, player):
+    opp = 1 if player == 0 else 0
 
-    if game.is_draw():
-        return 0, None
-    elif game.is_winner(maxPlayer):
+    if game.is_winner(1):  # COMP win
         return 10, None
-    elif game.is_winner(opp):
+    elif game.is_winner(0):
         return -10, None
+    elif game.is_draw():
+        return 0, None
     
-    max_t = -9999
-    max_c = None
-    for c in game.candidates():
-        game.move(c, maxPlayer)
+    opp = (1 + player) % 2
+    if player == 1:
+        max_t = -9999
+        max_c = None
+    
+        for c in game.candidates():
+            game.move(c, player)
+            t, cc = min_max(game, opp)
         
-        t, cc = min_max(game, opp)
-        t *= -1
-        if max_t < t:
-            max_t = t
-            max_c = c
+            if max_t < t:
+                max_t = t
+                max_c = c
             
-        game.back(c)
+            game.back(c)
+            
+        return max_t, max_c
+    else:
+        min_t = 9999
+        min_c = None
+
+        for c in game.candidates():
+            game.move(c, player)
+            t, cc = min_max(game, opp)
+            if min_t > t:
+                min_t = t
+                min_c = c
+            game.back(c)
         
-    return max_t, max_c
+        return min_t, min_c
 
 class TicTacToe:
     def start(self):
@@ -173,10 +180,13 @@ class TicTacToe:
             return
         
         self.cells[position] = self.player
+
         update_cells(self.cells)
+
         if not self.is_game_over():
             self.next_palyer()
         else:
+            self.game_running = False
             Element("reset-button").remove_class("hidden")
     
     def next_palyer(self):
@@ -187,7 +197,7 @@ class TicTacToe:
     def is_game_over(self):
     
         if self.is_winner(self.player):
-            win_messages = ["あなたの勝ち", "AIの勝ち"]
+            win_messages = ["あなたの勝ち🎉", "あなたの負け😞"]
             display_message(win_messages[self.player])
             self.game_running = False
             return True
